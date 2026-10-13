@@ -1,6 +1,7 @@
 # %%
 
 import torch
+from torch.nn.attention import SDPBackend, sdpa_kernel
 from torch.utils.data import DataLoader
 import numpy as np
 from deepinv.models.diffunet import DiffUNet
@@ -95,7 +96,8 @@ def main():
             )
 
             # Predict noise
-            noise_pred = model(noised_images, t, type_t="timestep")
+            with sdpa_kernel(SDPBackend.MATH):
+                noise_pred = model(noised_images, t, type_t="timestep")
 
             # Calculate loss (the model predicts the noise that was added)
             loss = nn.MSELoss()(noise_pred, noise)
@@ -148,7 +150,8 @@ def main():
                 )
 
                 # Get model prediction (predicted noise)
-                noise_pred = model(noised_image, t_tensor, type_t="timestep")
+                with sdpa_kernel(SDPBackend.MATH):
+                    noise_pred = model(noised_image, t_tensor, type_t="timestep")
 
                 # Denoise the image using the model prediction
                 # x_0 = (x_t - sqrt(1-α_t) * predicted_noise) / sqrt(α_t)

@@ -1,8 +1,9 @@
 import torch
 import deepinv
 from torchvision import datasets, transforms
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
-device = "cuda"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 32
 image_size = 32
 
@@ -51,8 +52,9 @@ for epoch in range(epochs):
         )
 
         optimizer.zero_grad()
-        estimated_noise = model(noised_imgs, t, type_t="timestep")
-        loss = mse(estimated_noise, noise)
+        with sdpa_kernel(SDPBackend.MATH):
+            estimated_noise = model(noised_imgs, t, type_t="timestep")
+        loss = mse(estimated_noise, noise).mean()
         loss.backward()
         optimizer.step()
 
