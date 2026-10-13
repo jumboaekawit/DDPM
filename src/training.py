@@ -96,7 +96,13 @@ def main():
             )
 
             # Predict noise
-            with sdpa_kernel(SDPBackend.MATH):
+            with sdpa_kernel(
+                [
+                    SDPBackend.FLASH_ATTENTION,
+                    SDPBackend.EFFICIENT_ATTENTION,
+                    SDPBackend.MATH,
+                ]
+            ):
                 noise_pred = model(noised_images, t, type_t="timestep")
 
             # Calculate loss (the model predicts the noise that was added)
@@ -150,7 +156,13 @@ def main():
                 )
 
                 # Get model prediction (predicted noise)
-                with sdpa_kernel(SDPBackend.MATH):
+                with sdpa_kernel(
+                    [
+                        SDPBackend.FLASH_ATTENTION,
+                        SDPBackend.EFFICIENT_ATTENTION,
+                        SDPBackend.MATH,
+                    ]
+                ):
                     noise_pred = model(noised_image, t_tensor, type_t="timestep")
 
                 # Denoise the image using the model prediction
